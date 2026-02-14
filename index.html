@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwingTrader Pro - V3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { background-color: #0f172a; color: white; }
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Icons
+        const IconTrendingUp = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>;
+        const IconGlobe = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>;
+        const IconCheck = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
+        const IconAlert = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>;
+        const IconBook = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>;
+
+        const SwingTraderPro = () => {
+            const [ticker, setTicker] = useState('BESI');
+            const [market, setMarket] = useState('EU'); // 'EU' or 'US'
+            
+            // Handmatige input voor analyse
+            const [manualPrice, setManualPrice] = useState('');
+            const [manualRSI, setManualRSI] = useState('');
+            const [trend, setTrend] = useState('neutral'); // 'bullish', 'bearish', 'neutral'
+            
+            const [advice, setAdvice] = useState(null);
+
+            // TradingView Widget logic
+            useEffect(() => {
+                const initWidget = () => {
+                    if (window.TradingView) {
+                        const container = document.getElementById('tradingview_widget');
+                        if(container) container.innerHTML = ''; 
+                        
+                        // Bepaal het symbool op basis van markt
+                        let symbolCode = ticker.toUpperCase();
+                        if (market === 'EU') symbolCode = `EURONEXT:${symbolCode}`;
+                        if (market === 'US') symbolCode = `NASDAQ:${symbolCode}`;
+
+                        new window.TradingView.widget({
+                            "width": "100%",
+                            "height": "100%",
+                            "symbol": symbolCode,
+                            "interval": "D",
+                            "timezone": "Europe/Brussels",
+                            "theme": "dark",
+                            "style": "1", // Candles
+                            "locale": "nl_NL",
+                            "toolbar_bg": "#f1f3f6",
+                            "enable_publishing": false,
+                            "allow_symbol_change": true,
+                            "container_id": "tradingview_widget",
+                            "hide_side_toolbar": false,
+                            "studies": [
+                                "RSI@tv-basicstudies", 
+                                "MASimple@tv-basicstudies" 
+                            ] 
+                        });
+                    }
+                };
+
+                if (!document.getElementById('tv-widget-script')) {
+                    const script = document.createElement('script');
+                    script.id = 'tv-widget-script';
+                    script.src = 'https://s3.tradingview.com/tv.js';
+                    script.async = true;
+                    script.onload = initWidget;
+                    document.body.appendChild(script);
+                } else {
+                    setTimeout(initWidget, 500); 
+                }
+            }, [ticker, market]);
+
+            const analyzeSignal = () => {
+                let score = 0;
+                let messages = [];
+                let color = "gray";
+
+                const rsi = parseInt(manualRSI);
+                
+                // 1. RSI Analyse
+                if (rsi < 30) {
+                    score += 2;
+                    messages.push("✅ RSI is Oversold (<30). Koopkansen!");
+                } else if (rsi > 70) {
+                    score -= 2;
+                    messages.push("❌ RSI is Overbought (>70). Pas op voor daling.");
+                } else {
+                    messages.push("ℹ️ RSI is neutraal.");
+                }
+
+                // 2. Trend Analyse
+                if (trend === 'bullish') {
+                    score += 1;
+                    messages.push("✅ De trend is positief (koers > gemiddelde).");
+                } else if (trend === 'bearish') {
+                    score -= 2; 
+                    messages.push("❌ De trend is negatief. Wacht tot koers herstelt.");
+                }
+
+                // Conclusie
+                let verdict = "AFWACHTEN";
+                if (score >= 3) {
+                    verdict = "STERK KOOP SIGNAAL";
+                    color = "green";
+                } else if (score > 0) {
+                    verdict = "MOGELIJKE KANS (Wees voorzichtig)";
+                    color = "yellow";
+                } else {
+                    verdict = "NIET KOPEN";
+                    color = "red";
+                }
+
+                setAdvice({ verdict, messages, color });
+            };
+
+            const calculateTrade = () => {
+                const price = parseFloat(manualPrice);
+                if (!price) return null;
+
+                const stopLossPrice = price * 0.98; 
+                const riskPerShare = price - stopLossPrice;
+                const maxRiskEuro = 50; // 1% van 5000
+                
+                const shares = Math.floor(maxRiskEuro / riskPerShare);
+                const totalInvested = shares * price;
+                const takeProfit = price + (riskPerShare * 3); // 1:3 ratio
+
+                return { shares, totalInvested, stopLossPrice, takeProfit, maxRiskEuro };
+            };
+
+            const tradeData = calculateTrade();
+
+            return (
+                <div className="min-h-screen bg-slate-900 text-slate-100 p-4 font-sans pb-20">
+                    <div className="max-w-6xl mx-auto space-y-6">
+                        
+                        {/* Header & Controls */}
+                        <div className="bg-slate-800 p-4 rounded-xl shadow-lg border border-slate-700 flex flex-col md:flex-row gap-4 items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-xl font-bold text-blue-400 flex items-center gap-2">
+                                    <IconTrendingUp /> SwingTrader V3
+                                </h1>
+                            </div>
+
+                            <div className="flex gap-2 w-full md:w-auto">
+                                <button 
+                                    onClick={() => setMarket(market === 'EU' ? 'US' : 'EU')}
+                                    className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg font-bold text-xs flex items-center gap-2 border border-slate-600"
+                                >
+                                    <IconGlobe /> {market === 'EU' ? '🇪🇺 Brussel (EURONEXT)' : '🇺🇸 USA (NASDAQ)'}
+                                </button>
+                                
+                                <input 
+                                    type="text" 
+                                    value={ticker}
+                                    onChange={(e) => setTicker(e.target.value.toUpperCase())}
+                                    className="w-full md:w-32 bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white font-mono tracking-wider focus:border-blue-500 outline-none"
+                                    placeholder="TICKER"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[800px] lg:h-[600px]">
+                            
+                            {/* CHART AREA */}
+                            <div className="lg:col-span-2 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden relative shadow-md flex flex-col">
+                                <div className="absolute top-2 left-2 z-10 bg-black/50 px-2 py-1 rounded text-xs">
+                                    Grafiek voor: {market === 'EU' ? 'EURONEXT:' : 'NASDAQ:'}{ticker}
+                                </div>
+                                <div id="tradingview_widget" className="w-full flex-grow"></div>
+                            </div>
+
+                            {/* ANALYSIS & CALCULATOR */}
+                            <div className="bg-slate-800 p-5 rounded-xl border border-slate-600 shadow-xl overflow-y-auto flex flex-col gap-6">
+                                
+                                {/* A. Wat zie je? */}
+                                <div>
+                                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wide mb-3 border-b border-slate-700 pb-2">1. Analyseer de Grafiek</h3>
+                                    
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="text-xs text-slate-400 block mb-1">RSI Waarde (0-100)</label>
+                                            <input 
+                                                type="number" 
+                                                placeholder="Bijv. 28 of 75"
+                                                value={manualRSI}
+                                                onChange={(e) => setManualRSI(e.target.value)}
+                                                className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="text-xs text-slate-400 block mb-1">Trend (Prijs vs Blauwe Lijn)</label>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                <button onClick={() => setTrend('bullish')} className={`p-2 text-xs rounded border ${trend === 'bullish' ? 'bg-green-900 border-green-500 text-white' : 'border-slate-600 text-slate-400'}`}>Stijgend ↗</button>
+                                                <button onClick={() => setTrend('neutral')} className={`p-2 text-xs rounded border ${trend === 'neutral' ? 'bg-yellow-900 border-yellow-500 text-white' : 'border-slate-600 text-slate-400'}`}>Vlak →</button>
+                                                <button onClick={() => setTrend('bearish')} className={`p-2 text-xs rounded border ${trend === 'bearish' ? 'bg-red-900 border-red-500 text-white' : 'border-slate-600 text-slate-400'}`}>Dalend ↘</button>
+                                            </div>
+                                        </div>
+
+                                        <button onClick={analyzeSignal} className="w-full bg-blue-600 hover:bg-blue-500 py-2 rounded font-bold text-sm">Check Signaal</button>
+
+                                        {advice && (
+                                            <div className={`p-3 rounded border-l-4 mt-2 ${advice.color === 'green' ? 'bg-green-900/30 border-green-500' : advice.color === 'red' ? 'bg-red-900/30 border-red-500' : 'bg-yellow-900/30 border-yellow-500'}`}>
+                                                <p className="font-bold text-sm mb-1">{advice.verdict}</p>
+                                                <ul className="text-xs space-y-1 opacity-80">
+                                                    {advice.messages.map((m, i) => <li key={i}>{m}</li>)}
+                                                </ul>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* B. Calculator */}
+                                <div>
+                                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wide mb-3 border-b border-slate-700 pb-2">2. Order Calculator</h3>
+                                    
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="text-xs text-slate-400 block mb-1">Huidige Prijs (€)</label>
+                                            <input 
+                                                type="number" 
+                                                value={manualPrice}
+                                                onChange={(e) => setManualPrice(e.target.value)}
+                                                className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white font-mono"
+                                            />
+                                        </div>
+
+                                        {tradeData ? (
+                                            <div className="bg-slate-700 p-4 rounded-lg text-sm space-y-2">
+                                                <div className="flex justify-between font-bold text-white text-lg border-b border-slate-600 pb-2">
+                                                    <span>Koop:</span>
+                                                    <span>{tradeData.shares} aandelen</span>
+                                                </div>
+                                                <div className="flex justify-between text-slate-300">
+                                                    <span>Investering:</span>
+                                                    <span>€ {tradeData.totalInvested.toFixed(2)}</span>
+                                                </div>
+                                                <div className="flex justify-between text-red-400">
+                                                    <span>Stop Loss:</span>
+                                                    <span>€ {tradeData.stopLossPrice.toFixed(2)}</span>
+                                                </div>
+                                                <div className="flex justify-between text-green-400">
+                                                    <span>Take Profit:</span>
+                                                    <span>€ {tradeData.takeProfit.toFixed(2)}</span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-slate-500 text-center italic">Vul prijs in voor berekening</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        {/* NIEUWE SECTIE: SPIEKBRIEFJE */}
+                        <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 mt-8">
+                            <h2 className="text-xl font-bold text-blue-400 mb-4 flex items-center gap-2">
+                                <IconBook /> Trading Spiekbriefje: Wanneer Kopen?
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                
+                                {/* Blok A: Trend */}
+                                <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-600">
+                                    <h3 className="font-bold text-lg mb-2 text-white">A. De Trend 📈</h3>
+                                    <p className="text-sm text-slate-400 italic mb-2">"Is het veilig? Zwem met de stroom mee."</p>
+                                    <ul className="text-sm space-y-2">
+                                        <li className="flex gap-2">
+                                            <span className="text-blue-400 font-bold">Hoe zien?</span>
+                                            <span>Kijk naar de blauwe lijn (Moving Average 50).</span>
+                                        </li>
+                                        <li className="bg-green-900/30 p-2 rounded border-l-2 border-green-500">
+                                            <span className="font-bold text-green-400">Positief (Bullish):</span>
+                                            <br/>Koers ligt <span className="underline">boven</span> de blauwe lijn.
+                                        </li>
+                                        <li className="bg-red-900/30 p-2 rounded border-l-2 border-red-500">
+                                            <span className="font-bold text-red-400">Negatief (Bearish):</span>
+                                            <br/>Koers ligt <span className="underline">onder</span> de blauwe lijn. Blijf weg!
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                {/* Blok B: RSI */}
+                                <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-600">
+                                    <h3 className="font-bold text-lg mb-2 text-white">B. De RSI 📊</h3>
+                                    <p className="text-sm text-slate-400 italic mb-2">"Is het goedkoop? De snelheidsmeter (0-100)."</p>
+                                    <ul className="text-sm space-y-2">
+                                        <li className="bg-green-900/30 p-2 rounded border-l-2 border-green-500">
+                                            <span className="font-bold text-green-400">RSI &lt; 30 (Oversold):</span>
+                                            <br/>Aandeel is 'afgestraft'. Iedereen heeft verkocht. Kans op bounce omhoog. <span className="font-bold">KOOPZONE</span>.
+                                        </li>
+                                        <li className="bg-red-900/30 p-2 rounded border-l-2 border-red-500">
+                                            <span className="font-bold text-red-400">RSI &gt; 70 (Overbought):</span>
+                                            <br/>Te hard gestegen. Kans op winstnemingen en daling. <span className="font-bold">VERKOOPZONE</span>.
+                                        </li>
+                                        <li className="text-slate-300 pl-2 border-l-2 border-slate-500">
+                                            <span className="font-bold">RSI 50:</span> Neutraal. Geen signaal.
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                {/* Blok C: Steun & Weerstand */}
+                                <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-600">
+                                    <h3 className="font-bold text-lg mb-2 text-white">C. In- & Uitstap 🎯</h3>
+                                    <p className="text-sm text-slate-400 italic mb-2">"Kijk naar de grafiek van de afgelopen 3 maanden."</p>
+                                    <ul className="text-sm space-y-2">
+                                        <li className="bg-blue-900/30 p-2 rounded border-l-2 border-blue-500">
+                                            <span className="font-bold text-blue-300">Steun (De Vloer):</span>
+                                            <br/>Trek een lijn onder de punten waar de koers eerder stopte met dalen.
+                                            <br/>👉 <span className="italic">Koop zo dicht mogelijk bij de vloer.</span>
+                                        </li>
+                                        <li className="bg-yellow-900/30 p-2 rounded border-l-2 border-yellow-500">
+                                            <span className="font-bold text-yellow-300">Weerstand (Het Plafond):</span>
+                                            <br/>Trek een lijn boven de toppen waar de koers eerder zijn hoofd stootte.
+                                            <br/>👉 <span className="italic">Verkoop hier je aandelen.</span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<SwingTraderPro />);
+    </script>
+</body>
+</html>
