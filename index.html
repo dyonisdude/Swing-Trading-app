@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SwingTrader Pro - V6</title>
+    <title>SwingTrader Pro - V15</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -12,6 +12,9 @@
         body { background-color: #0f172a; color: white; }
         .spin { animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -19,33 +22,72 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
         // Icons
-        const IconTrendingUp = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>;
-        const IconGlobe = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>;
-        const IconExternal = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>;
-        const IconBook = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>;
+        const IconSearch = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>;
+        const IconTrendingUp = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>;
+        const IconExternal = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>;
+        const IconBook = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>;
+        const IconGlobe = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"/></svg>;
+        const IconCalc = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12" y2="18"/><line x1="8" y1="18" x2="8" y2="18"/><line x1="16" y1="18" x2="16" y2="18"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="16" y1="14" x2="16" y2="14"/><line x1="8" y1="10" x2="8" y2="10"/><line x1="12" y1="10" x2="12" y2="10"/><line x1="16" y1="10" x2="16" y2="10"/></svg>;
+        const IconStar = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill={props.fill || "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>;
+        const IconTrash = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
 
         const SwingTraderPro = () => {
+            // Basis settings
             const [ticker, setTicker] = useState('BESI');
-            const [market, setMarket] = useState('EU'); // 'EU' or 'US'
+            const [market, setMarket] = useState('EU'); 
             const [exchange, setExchange] = useState('EURONEXT');
             
-            // Handmatige input voor analyse
+            // Watchlist State (met LocalStorage)
+            const [watchlist, setWatchlist] = useState(() => {
+                const saved = localStorage.getItem('swingTraderWatchlist');
+                return saved ? JSON.parse(saved) : [];
+            });
+            
+            // Analyse inputs
             const [manualPrice, setManualPrice] = useState('');
             const [manualRSI, setManualRSI] = useState('');
             const [trend, setTrend] = useState('neutral'); 
             const [macdCross, setMacdCross] = useState('none'); 
-            
             const [advice, setAdvice] = useState(null);
 
+            // Update exchange bij markt wissel
             useEffect(() => {
                 if (market === 'EU') setExchange('EURONEXT');
                 if (market === 'US') setExchange('NASDAQ');
             }, [market]);
 
-            // TradingView Widget logic (ZONDER MACD in de grafiek zelf)
+            // Save Watchlist
+            useEffect(() => {
+                localStorage.setItem('swingTraderWatchlist', JSON.stringify(watchlist));
+            }, [watchlist]);
+
+            // Toggle Watchlist functie
+            const toggleWatchlist = () => {
+                const alreadySaved = watchlist.find(item => item.ticker === ticker);
+                if (alreadySaved) {
+                    setWatchlist(watchlist.filter(item => item.ticker !== ticker));
+                } else {
+                    setWatchlist([...watchlist, { ticker, market, exchange }]);
+                }
+            };
+            
+            const isSaved = watchlist.some(item => item.ticker === ticker);
+
+            const loadFromWatchlist = (item) => {
+                setTicker(item.ticker);
+                setMarket(item.market);
+                setExchange(item.exchange);
+            };
+
+            const removeFromWatchlist = (e, itemTicker) => {
+                e.stopPropagation(); // Voorkom dat we het laden als we op verwijderen klikken
+                setWatchlist(watchlist.filter(item => item.ticker !== itemTicker));
+            };
+
+            // TradingView Widget
             useEffect(() => {
                 const initWidget = () => {
                     if (window.TradingView) {
@@ -61,17 +103,14 @@
                             "interval": "D",
                             "timezone": "Europe/Brussels",
                             "theme": "dark",
-                            "style": "1", // Candles
+                            "style": "1",
                             "locale": "nl_NL",
                             "toolbar_bg": "#f1f3f6",
                             "enable_publishing": false,
                             "allow_symbol_change": true,
                             "container_id": "tradingview_widget",
                             "hide_side_toolbar": false,
-                            "studies": [
-                                "RSI@tv-basicstudies",      // RSI Indicator
-                                "MASimple@tv-basicstudies"  // Moving Average
-                            ] 
+                            "studies": [ "RSI@tv-basicstudies", "MASimple@tv-basicstudies" ] 
                         });
                     }
                 };
@@ -88,54 +127,29 @@
                 }
             }, [ticker, market, exchange]);
 
+            // Signaal Logica
             const analyzeSignal = () => {
                 let score = 0;
                 let messages = [];
                 let color = "gray";
 
                 const rsi = parseInt(manualRSI);
-                
-                // 1. RSI Analyse
-                if (rsi < 35) {
-                    score += 2;
-                    messages.push("✅ RSI is laag/goedkoop (<35).");
-                } else if (rsi > 70) {
-                    score -= 2;
-                    messages.push("❌ RSI is te hoog/duur (>70).");
-                } else {
-                    messages.push("ℹ️ RSI is neutraal.");
-                }
+                if (rsi < 35) { score += 2; messages.push("✅ RSI is laag/goedkoop (<35)."); } 
+                else if (rsi > 70) { score -= 2; messages.push("❌ RSI is te hoog/duur (>70)."); } 
+                else { messages.push("ℹ️ RSI is neutraal."); }
 
-                // 2. Trend Analyse
-                if (trend === 'bullish') {
-                    score += 1;
-                    messages.push("✅ Trend is positief.");
-                } else if (trend === 'bearish') {
-                    score -= 1; 
-                    messages.push("⚠️ Trend is negatief (pas op).");
-                }
+                if (trend === 'bullish') { score += 1; messages.push("✅ Trend is positief."); } 
+                else if (trend === 'bearish') { score -= 1; messages.push("⚠️ Trend is negatief."); }
 
-                // 3. MACD Analyse
-                if (macdCross === 'bullish') {
-                    score += 2;
-                    messages.push("🚀 MACD Kruising Omhoog: Koopsignaal!");
-                } else if (macdCross === 'bearish') {
-                    score -= 3;
-                    messages.push("🛑 MACD Kruising Omlaag: Verkoopsignaal!");
-                }
+                if (macdCross === 'bullish') { score += 2; messages.push("🚀 MACD Kruising Omhoog: Koop!"); } 
+                else if (macdCross === 'bearish') { score -= 3; messages.push("🛑 MACD Kruising Omlaag: Verkoop!"); }
 
-                // Conclusie
+                messages.push("📅 Check zeker ook de datum van de cijfers!");
+
                 let verdict = "AFWACHTEN";
-                if (score >= 4) {
-                    verdict = "STERK KOOP SIGNAAL";
-                    color = "green";
-                } else if (score >= 2) {
-                    verdict = "MOGELIJKE KANS";
-                    color = "yellow";
-                } else {
-                    verdict = "NIET KOPEN";
-                    color = "red";
-                }
+                if (score >= 4) { verdict = "STERK KOOP SIGNAAL"; color = "green"; } 
+                else if (score >= 2) { verdict = "MOGELIJKE KANS"; color = "yellow"; } 
+                else { verdict = "NIET KOPEN"; color = "red"; }
 
                 setAdvice({ verdict, messages, color });
             };
@@ -143,15 +157,12 @@
             const calculateTrade = () => {
                 const price = parseFloat(manualPrice);
                 if (!price) return null;
-
                 const stopLossPrice = price * 0.98; 
                 const riskPerShare = price - stopLossPrice;
                 const maxRiskEuro = 50; 
-                
                 const shares = Math.floor(maxRiskEuro / riskPerShare);
                 const totalInvested = shares * price;
                 const takeProfit = price + (riskPerShare * 3); 
-
                 return { shares, totalInvested, stopLossPrice, takeProfit, maxRiskEuro };
             };
 
@@ -161,65 +172,128 @@
                 <div className="min-h-screen bg-slate-900 text-slate-100 p-4 font-sans pb-20">
                     <div className="max-w-6xl mx-auto space-y-6">
                         
-                        {/* Header & Controls */}
-                        <div className="bg-slate-800 p-4 rounded-xl shadow-lg border border-slate-700 flex flex-col md:flex-row gap-4 items-center justify-between">
-                            <div className="flex items-center gap-2">
+                        {/* HEADER & INPUTS */}
+                        <div className="bg-slate-800 p-4 rounded-xl shadow-lg border border-slate-700">
+                            <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center mb-4">
                                 <h1 className="text-xl font-bold text-blue-400 flex items-center gap-2">
-                                    <IconTrendingUp /> SwingTrader V6
+                                    <IconTrendingUp /> SwingTrader V15
                                 </h1>
-                            </div>
-
-                            <div className="flex flex-wrap gap-2 w-full md:w-auto items-center">
-                                <button 
-                                    onClick={() => setMarket(market === 'EU' ? 'US' : 'EU')}
-                                    className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg font-bold text-xs flex items-center gap-2 border border-slate-600 transition-colors"
-                                >
-                                    <IconGlobe /> {market === 'EU' ? 'EUROPA' : 'USA'}
-                                </button>
-
-                                <select 
-                                    value={exchange}
-                                    onChange={(e) => setExchange(e.target.value)}
-                                    className="bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white text-xs font-mono outline-none hover:border-blue-500"
-                                >
-                                    {market === 'EU' ? (
-                                        <>
-                                            <option value="EURONEXT">Euronext (AMS/BRU)</option>
-                                            <option value="TRADEGATE">Tradegate (Backup)</option>
-                                            <option value="XETR">Xetra (Duitsland)</option>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <option value="NASDAQ">NASDAQ</option>
-                                            <option value="NYSE">NYSE</option>
-                                        </>
-                                    )}
-                                </select>
                                 
-                                <input 
-                                    type="text" 
-                                    value={ticker}
-                                    onChange={(e) => setTicker(e.target.value.toUpperCase())}
-                                    className="w-24 md:w-32 bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white font-mono tracking-wider focus:border-blue-500 outline-none"
-                                    placeholder="TICKER"
-                                />
+                                <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                                    <button 
+                                        onClick={() => setMarket(market === 'EU' ? 'US' : 'EU')}
+                                        className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg font-bold text-xs flex items-center gap-2 border border-slate-600 transition-colors"
+                                    >
+                                        <IconGlobe /> {market === 'EU' ? 'EUROPA' : 'USA'}
+                                    </button>
+
+                                    <select 
+                                        value={exchange}
+                                        onChange={(e) => setExchange(e.target.value)}
+                                        className="bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white text-xs font-mono outline-none hover:border-blue-500"
+                                    >
+                                        {market === 'EU' ? (
+                                            <>
+                                                <option value="EURONEXT">Euronext (AMS/BRU)</option>
+                                                <option value="TRADEGATE">Tradegate (DE)</option>
+                                                <option value="XETR">Xetra (DE)</option>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <option value="NASDAQ">NASDAQ</option>
+                                                <option value="NYSE">NYSE</option>
+                                            </>
+                                        )}
+                                    </select>
+                                </div>
                             </div>
+
+                            <div className="flex flex-col md:flex-row gap-4 items-end">
+                                {/* TICKER INPUT (Vrij) */}
+                                <div className="relative flex-grow w-full">
+                                    <label className="text-[10px] text-slate-400 uppercase tracking-wide font-bold mb-1 block">Ticker / Symbool</label>
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex-grow flex items-center bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 focus-within:border-blue-500">
+                                            <IconSearch className="text-slate-400" />
+                                            <input 
+                                                type="text" 
+                                                value={ticker}
+                                                onChange={(e) => setTicker(e.target.value.toUpperCase())}
+                                                className="bg-transparent border-none outline-none text-white ml-2 w-full font-mono placeholder-slate-600 uppercase"
+                                                placeholder="Typ ticker (bv. BESI)..."
+                                            />
+                                        </div>
+                                        
+                                        {/* SAVE BUTTON */}
+                                        <button 
+                                            onClick={toggleWatchlist}
+                                            className={`p-2 rounded-lg border transition-colors ${isSaved ? 'bg-yellow-900/30 border-yellow-500 text-yellow-400' : 'bg-slate-700 border-slate-600 text-slate-400 hover:text-white'}`}
+                                            title="Zet op Watchlist"
+                                        >
+                                            <IconStar fill={isSaved ? "currentColor" : "none"} />
+                                        </button>
+
+                                        {/* HULP KNOP: ZOEK NAAM */}
+                                        <a 
+                                            href={`https://www.google.com/search?q=${ticker}+stock+ticker`} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap border border-slate-500"
+                                            title="Weet je de ticker niet? Zoek op Google"
+                                        >
+                                            🔍 Zoek Ticker
+                                        </a>
+                                    </div>
+                                    <div className="mt-1 flex justify-start gap-4">
+                                         <a 
+                                            href={`https://www.google.com/search?q=${ticker}+stock+earnings+date`} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="text-[10px] text-blue-400 hover:text-blue-300 cursor-pointer flex items-center gap-1"
+                                        >
+                                            📅 Check datum cijfers
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* WATCHLIST BAR */}
+                            {watchlist.length > 0 && (
+                                <div className="mt-4 pt-4 border-t border-slate-700">
+                                    <label className="text-[10px] text-slate-400 uppercase tracking-wide font-bold mb-2 block">Mijn Watchlist</label>
+                                    <div className="flex gap-2 overflow-x-auto pb-2">
+                                        {watchlist.map((item, idx) => (
+                                            <div 
+                                                key={idx}
+                                                onClick={() => loadFromWatchlist(item)}
+                                                className={`flex items-center gap-2 px-3 py-1.5 rounded-full border cursor-pointer transition-colors whitespace-nowrap ${ticker === item.ticker ? 'bg-blue-900 border-blue-500 text-white' : 'bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600'}`}
+                                            >
+                                                <span className="font-mono text-sm">{item.ticker}</span>
+                                                <span className="text-[10px] opacity-50">{item.market}</span>
+                                                <button 
+                                                    onClick={(e) => removeFromWatchlist(e, item.ticker)}
+                                                    className="ml-1 hover:text-red-400"
+                                                >
+                                                    <IconTrash />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
+                        {/* MAIN GRID */}
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[900px] lg:h-[750px]">
                             
-                            {/* CHART AREA */}
+                            {/* CHART */}
                             <div className="lg:col-span-2 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden relative shadow-md flex flex-col">
                                 <div className="absolute top-2 left-2 z-10 flex gap-2">
-                                    <div className="bg-black/50 px-2 py-1 rounded text-xs backdrop-blur-sm border border-white/10">
-                                        {exchange}:{ticker}
-                                    </div>
                                     <a 
                                         href={`https://www.tradingview.com/chart/?symbol=${exchange}:${ticker}`} 
                                         target="_blank" 
                                         rel="noopener noreferrer"
                                         className="bg-blue-600/80 hover:bg-blue-600 px-2 py-1 rounded text-xs flex items-center gap-1 backdrop-blur-sm transition-colors cursor-pointer"
-                                        title="Open in groot venster"
                                     >
                                         <IconExternal /> Open Groot
                                     </a>
@@ -227,29 +301,21 @@
                                 <div id="tradingview_widget" className="w-full flex-grow"></div>
                             </div>
 
-                            {/* ANALYSIS & CALCULATOR */}
+                            {/* ANALYSIS TOOLS */}
                             <div className="bg-slate-800 p-5 rounded-xl border border-slate-600 shadow-xl overflow-y-auto flex flex-col gap-6">
                                 
-                                {/* A. Checklist */}
+                                {/* Checklist */}
                                 <div>
-                                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wide mb-3 border-b border-slate-700 pb-2">1. Analyseer de Signalen</h3>
+                                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wide mb-3 border-b border-slate-700 pb-2">1. Checklist</h3>
                                     
                                     <div className="space-y-4">
-                                        {/* RSI */}
                                         <div>
-                                            <label className="text-xs text-slate-400 block mb-1">RSI Waarde (0-100)</label>
-                                            <input 
-                                                type="number" 
-                                                placeholder="Bijv. 28"
-                                                value={manualRSI}
-                                                onChange={(e) => setManualRSI(e.target.value)}
-                                                className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white"
-                                            />
+                                            <label className="text-xs text-slate-400 block mb-1">RSI Waarde</label>
+                                            <input type="number" placeholder="0-100" value={manualRSI} onChange={(e) => setManualRSI(e.target.value)} className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white"/>
                                         </div>
 
-                                        {/* Trend */}
                                         <div>
-                                            <label className="text-xs text-slate-400 block mb-1">Trend (Prijs vs Blauwe Lijn)</label>
+                                            <label className="text-xs text-slate-400 block mb-1">Trend (vs MA50)</label>
                                             <div className="grid grid-cols-3 gap-2">
                                                 <button onClick={() => setTrend('bullish')} className={`p-2 text-xs rounded border ${trend === 'bullish' ? 'bg-green-900 border-green-500 text-white' : 'border-slate-600 text-slate-400'}`}>↗ Op</button>
                                                 <button onClick={() => setTrend('neutral')} className={`p-2 text-xs rounded border ${trend === 'neutral' ? 'bg-yellow-900 border-yellow-500 text-white' : 'border-slate-600 text-slate-400'}`}>→ Vlak</button>
@@ -257,9 +323,8 @@
                                             </div>
                                         </div>
 
-                                        {/* MACD Checkbox */}
                                         <div className="border-t border-slate-700 pt-3">
-                                            <label className="text-xs text-blue-400 block mb-1 font-bold">MACD (Optioneel)</label>
+                                            <label className="text-xs text-blue-400 block mb-1 font-bold">MACD Signaal</label>
                                             <div className="grid grid-cols-3 gap-2">
                                                 <button onClick={() => setMacdCross('bullish')} className={`p-2 text-xs rounded border ${macdCross === 'bullish' ? 'bg-green-600 border-green-400 text-white' : 'border-slate-600 text-slate-400'}`}>↗ Kruist Op</button>
                                                 <button onClick={() => setMacdCross('none')} className={`p-2 text-xs rounded border ${macdCross === 'none' ? 'bg-slate-700 border-slate-500 text-white' : 'border-slate-600 text-slate-400'}`}>- Geen</button>
@@ -280,120 +345,116 @@
                                     </div>
                                 </div>
 
-                                {/* B. Calculator */}
+                                {/* Calculator */}
                                 <div>
-                                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wide mb-3 border-b border-slate-700 pb-2">2. Order Calculator</h3>
-                                    
+                                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wide mb-3 border-b border-slate-700 pb-2 flex items-center gap-2">
+                                        <IconCalc /> 2. Calculator
+                                    </h3>
                                     <div className="space-y-4">
+                                        {/* MANUEEL VELD */}
                                         <div>
-                                            <label className="text-xs text-slate-400 block mb-1">Huidige Prijs (€)</label>
+                                            <label className="text-xs text-slate-400 block mb-1">Huidige Prijs (€/$)</label>
                                             <input 
                                                 type="number" 
-                                                value={manualPrice}
-                                                onChange={(e) => setManualPrice(e.target.value)}
-                                                className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white font-mono"
+                                                value={manualPrice} 
+                                                onChange={(e) => setManualPrice(e.target.value)} 
+                                                className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white font-mono text-lg font-bold"
+                                                placeholder="0.00"
                                             />
                                         </div>
 
                                         {tradeData ? (
-                                            <div className="bg-slate-700 p-4 rounded-lg text-sm space-y-2">
+                                            <div className="bg-slate-700 p-4 rounded-lg text-sm space-y-2 border-l-4 border-blue-500 shadow-md">
                                                 <div className="flex justify-between font-bold text-white text-lg border-b border-slate-600 pb-2">
-                                                    <span>Koop:</span>
-                                                    <span>{tradeData.shares} aandelen</span>
+                                                    <span>Koop:</span><span>{tradeData.shares} aandelen</span>
                                                 </div>
-                                                <div className="flex justify-between text-slate-300">
-                                                    <span>Investering:</span>
-                                                    <span>€ {tradeData.totalInvested.toFixed(2)}</span>
-                                                </div>
-                                                <div className="flex justify-between text-red-400">
-                                                    <span>Stop Loss:</span>
-                                                    <span>€ {tradeData.stopLossPrice.toFixed(2)}</span>
-                                                </div>
-                                                <div className="flex justify-between text-green-400">
-                                                    <span>Take Profit:</span>
-                                                    <span>€ {tradeData.takeProfit.toFixed(2)}</span>
-                                                </div>
+                                                <div className="flex justify-between text-slate-300"><span>Investering:</span><span>€ {tradeData.totalInvested.toFixed(2)}</span></div>
+                                                <div className="flex justify-between text-red-400"><span>Stop Loss:</span><span>€ {tradeData.stopLossPrice.toFixed(2)}</span></div>
+                                                <div className="flex justify-between text-green-400"><span>Take Profit:</span><span>€ {tradeData.takeProfit.toFixed(2)}</span></div>
+                                                <div className="text-[10px] text-slate-400 text-center pt-1 italic">Max risico €50 (1%)</div>
                                             </div>
-                                        ) : (
-                                            <p className="text-xs text-slate-500 text-center italic">Vul prijs in voor berekening</p>
-                                        )}
+                                        ) : <p className="text-xs text-slate-500 text-center italic">Vul de koers hierboven in.</p>}
                                     </div>
                                 </div>
-
                             </div>
                         </div>
 
-                        {/* SECTIE: SPIEKBRIEFJE (Met MACD) */}
+                        {/* SPIEKBRIEFJE */}
                         <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 mt-8">
                             <h2 className="text-xl font-bold text-blue-400 mb-4 flex items-center gap-2">
                                 <IconBook /> Trading Spiekbriefje
                             </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
                                 
-                                <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-600">
-                                    <h3 className="font-bold text-lg mb-2 text-white">1. De Trend (Is het veilig?)</h3>
-                                    <ul className="text-sm space-y-2">
-                                        <li className="flex gap-2">
-                                            <span className="text-blue-400 font-bold w-20">Kijk naar:</span>
-                                            <span>De blauwe lijn (Moving Average 50).</span>
-                                        </li>
-                                        <li className="bg-green-900/30 p-2 rounded border-l-2 border-green-500">
-                                            <span className="font-bold text-green-400">Positief:</span> Koers ligt <span className="underline">boven</span> de blauwe lijn.
-                                        </li>
-                                        <li className="bg-red-900/30 p-2 rounded border-l-2 border-red-500">
-                                            <span className="font-bold text-red-400">Negatief:</span> Koers ligt <span className="underline">onder</span> de blauwe lijn.
-                                        </li>
-                                    </ul>
+                                {/* Trend & RSI */}
+                                <div className="space-y-6">
+                                    <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-600">
+                                        <h3 className="font-bold text-lg mb-2 text-white">1. De Trend (Is het veilig?)</h3>
+                                        <ul className="text-sm space-y-2">
+                                            <li className="flex gap-2 text-slate-300">
+                                                <span className="text-blue-400 font-bold w-20">Kijk naar:</span>
+                                                <span>De blauwe lijn (Moving Average 50).</span>
+                                            </li>
+                                            <li className="bg-green-900/30 p-2 rounded border-l-2 border-green-500">
+                                                <span className="font-bold text-green-400">Positief:</span> Koers ligt <span className="underline">boven</span> de blauwe lijn.
+                                            </li>
+                                            <li className="bg-red-900/30 p-2 rounded border-l-2 border-red-500">
+                                                <span className="font-bold text-red-400">Negatief:</span> Koers ligt <span className="underline">onder</span> de blauwe lijn.
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-600">
+                                        <h3 className="font-bold text-lg mb-2 text-white">2. RSI (Is het goedkoop?)</h3>
+                                        <ul className="text-sm space-y-2">
+                                            <li className="flex gap-2 text-slate-300">
+                                                <span className="text-blue-400 font-bold w-20">Doel:</span>
+                                                <span>Koop laag, verkoop hoog.</span>
+                                            </li>
+                                            <li className="bg-green-900/30 p-2 rounded border-l-2 border-green-500">
+                                                <span className="font-bold text-green-400">&lt; 30 (Oversold):</span> Iedereen heeft verkocht. Kans op bounce. <span className="font-bold">KOOPZONE</span>.
+                                            </li>
+                                            <li className="bg-red-900/30 p-2 rounded border-l-2 border-red-500">
+                                                <span className="font-bold text-red-400">&gt; 70 (Overbought):</span> Te hard gestegen. Gevaar. <span className="font-bold">VERKOOPZONE</span>.
+                                            </li>
+                                        </ul>
+                                    </div>
                                 </div>
 
-                                <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-600">
-                                    <h3 className="font-bold text-lg mb-2 text-white">2. RSI (Is het goedkoop?)</h3>
-                                    <ul className="text-sm space-y-2">
-                                        <li className="flex gap-2">
-                                            <span className="text-blue-400 font-bold w-20">Doel:</span>
-                                            <span>Koop laag, verkoop hoog.</span>
-                                        </li>
-                                        <li className="bg-green-900/30 p-2 rounded border-l-2 border-green-500">
-                                            <span className="font-bold text-green-400">&lt; 30 (Oversold):</span> Iedereen heeft verkocht. Kans op bounce. <span className="font-bold">KOOPZONE</span>.
-                                        </li>
-                                        <li className="bg-red-900/30 p-2 rounded border-l-2 border-red-500">
-                                            <span className="font-bold text-red-400">&gt; 70 (Overbought):</span> Te hard gestegen. Gevaar. <span className="font-bold">VERKOOPZONE</span>.
-                                        </li>
-                                    </ul>
-                                </div>
+                                {/* Steun & MACD */}
+                                <div className="space-y-6">
+                                    <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-600">
+                                        <h3 className="font-bold text-lg mb-2 text-white">3. Steun & Weerstand</h3>
+                                        <ul className="text-sm space-y-2">
+                                            <li className="bg-blue-900/30 p-2 rounded border-l-2 border-blue-500">
+                                                <span className="font-bold text-blue-300">Steun (De Vloer):</span>
+                                                <br/>Lijn onder de punten waar koers stopte met dalen.
+                                                <br/>👉 <span className="italic">Koop zo dicht mogelijk bij de vloer.</span>
+                                            </li>
+                                            <li className="bg-yellow-900/30 p-2 rounded border-l-2 border-yellow-500">
+                                                <span className="font-bold text-yellow-300">Weerstand (Het Plafond):</span>
+                                                <br/>Lijn boven de toppen. Verkoop hier.
+                                            </li>
+                                        </ul>
+                                    </div>
 
-                                <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-600">
-                                    <h3 className="font-bold text-lg mb-2 text-white">3. Steun & Weerstand</h3>
-                                    <ul className="text-sm space-y-2">
-                                        <li className="bg-blue-900/30 p-2 rounded border-l-2 border-blue-500">
-                                            <span className="font-bold text-blue-300">Steun (De Vloer):</span>
-                                            <br/>Lijn onder de punten waar koers stopte met dalen.
-                                            <br/>👉 <span className="italic">Koop zo dicht mogelijk bij de vloer.</span>
-                                        </li>
-                                        <li className="bg-yellow-900/30 p-2 rounded border-l-2 border-yellow-500">
-                                            <span className="font-bold text-yellow-300">Weerstand (Het Plafond):</span>
-                                            <br/>Lijn boven de toppen. Verkoop hier.
-                                        </li>
-                                    </ul>
-                                </div>
-
-                                {/* MACD SECTIE */}
-                                <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-600">
-                                    <h3 className="font-bold text-lg mb-2 text-blue-300">4. MACD (Startschot) 🚀</h3>
-                                    <ul className="text-sm space-y-2">
-                                        <li className="text-slate-400 mb-1">
-                                            "Geven we gas of remmen we?"
-                                        </li>
-                                        <li className="bg-green-900/30 p-2 rounded border-l-2 border-green-500">
-                                            <span className="font-bold text-green-400">KOOP (Bullish Cross):</span>
-                                            <br/>Blauwe lijn kruist oranje naar <span className="underline font-bold">BOVEN</span>.
-                                            <br/><em>Momentum is gedraaid: Groen licht!</em>
-                                        </li>
-                                        <li className="bg-red-900/30 p-2 rounded border-l-2 border-red-500">
-                                            <span className="font-bold text-red-400">VERKOOP (Bearish Cross):</span>
-                                            <br/>Blauwe lijn kruist oranje naar <span className="underline font-bold">BENEDEN</span>.
-                                        </li>
-                                    </ul>
+                                    <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-600">
+                                        <h3 className="font-bold text-lg mb-2 text-blue-300">4. MACD (Startschot) 🚀</h3>
+                                        <ul className="text-sm space-y-2">
+                                            <li className="text-slate-400 mb-1">
+                                                "Geven we gas of remmen we?"
+                                            </li>
+                                            <li className="bg-green-900/30 p-2 rounded border-l-2 border-green-500">
+                                                <span className="font-bold text-green-400">KOOP (Bullish Cross):</span>
+                                                <br/>Blauwe lijn kruist oranje naar <span className="underline font-bold">BOVEN</span>.
+                                                <br/><em>Momentum is gedraaid: Groen licht!</em>
+                                            </li>
+                                            <li className="bg-red-900/30 p-2 rounded border-l-2 border-red-500">
+                                                <span className="font-bold text-red-400">VERKOOP (Bearish Cross):</span>
+                                                <br/>Blauwe lijn kruist oranje naar <span className="underline font-bold">BENEDEN</span>.
+                                            </li>
+                                        </ul>
+                                    </div>
                                 </div>
 
                             </div>
