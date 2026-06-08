@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SwingTrader Pro - V17</title>
+    <title>SwingTrader Pro - V18</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -38,7 +38,7 @@
         const SwingTraderPro = () => {
             // Basis settings
             const [ticker, setTicker] = useState('BESI');
-            const [market, setMarket] = useState('EU'); // Nu: EU, US, UK, SE
+            const [market, setMarket] = useState('EU'); // EU, US, UK, SE
             const [exchange, setExchange] = useState('EURONEXT');
             
             // Watchlist State
@@ -71,7 +71,7 @@
                 localStorage.setItem('swingTraderWatchlist', JSON.stringify(watchlist));
             }, [watchlist]);
 
-            // Functie: Nieuws Ophalen voor Watchlist (RSS Hack)
+            // Functie: Nieuws Ophalen via RSS Proxy
             const fetchNewsForWatchlist = async () => {
                 if (watchlist.length === 0) return;
                 setIsFetchingNews(true);
@@ -80,11 +80,10 @@
                 
                 for (const item of watchlist) {
                     try {
-                        // Yahoo Ticker Formatteren (Hack voor lokale beurzen)
                         let yTicker = item.ticker.toUpperCase();
-                        if (item.market === 'EU') yTicker += '.AS'; // We proberen standaard Amsterdam
-                        if (item.market === 'UK') yTicker += '.L';  // Londen suffix
-                        if (item.market === 'SE') yTicker += '.ST'; // Stockholm suffix
+                        if (item.market === 'EU') yTicker += '.AS'; 
+                        if (item.market === 'UK') yTicker += '.L';  
+                        if (item.market === 'SE') yTicker += '.ST'; 
                         
                         const rssUrl = `https://finance.yahoo.com/rss/headline?s=${yTicker}`;
                         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`;
@@ -102,7 +101,7 @@
                                 link: items[0].querySelector("link")?.textContent || "#",
                             };
                         } else {
-                            newNewsData[item.ticker] = null; // Geen nieuws gevonden via RSS
+                            newNewsData[item.ticker] = null; 
                         }
                     } catch (error) {
                         newNewsData[item.ticker] = null;
@@ -113,19 +112,17 @@
                 setIsFetchingNews(false);
             };
 
-            // Haal 1x nieuws op als we openen en er een watchlist is
+            // Haal nieuws op bij eerste keer laden
             useEffect(() => {
                 fetchNewsForWatchlist();
-            }, []); // Lege array = 1x bij laden pagina
+            }, []);
 
-            // Toggle Watchlist
             const toggleWatchlist = () => {
                 const alreadySaved = watchlist.find(item => item.ticker === ticker);
                 if (alreadySaved) {
                     setWatchlist(watchlist.filter(item => item.ticker !== ticker));
                 } else {
-                    const newList = [...watchlist, { ticker, market, exchange }];
-                    setWatchlist(newList);
+                    setWatchlist([...watchlist, { ticker, market, exchange }]);
                 }
             };
             
@@ -231,10 +228,10 @@
                         <div className="bg-slate-800 p-4 rounded-xl shadow-lg border border-slate-700">
                             <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center mb-4 border-b border-slate-700 pb-4">
                                 <h1 className="text-xl font-bold text-blue-400 flex items-center gap-2">
-                                    <IconTrendingUp /> SwingTrader V17
+                                    <IconTrendingUp /> SwingTrader V18
                                 </h1>
                                 
-                                {/* MARKIES / BEURZEN BEDIENING (VERBETERD) */}
+                                {/* MARKTEN */}
                                 <div className="flex flex-wrap gap-2 w-full md:w-auto items-center">
                                     <div className="flex bg-slate-900 rounded-lg p-1 border border-slate-600">
                                         <button onClick={() => setMarket('EU')} className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${market === 'EU' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>🇪🇺 EU</button>
@@ -276,7 +273,7 @@
                                             <IconStar fill={isSaved ? "currentColor" : "none"} />
                                         </button>
 
-                                        <a href={`https://www.google.com/search?q=${ticker}+stock+ticker`} target="_blank" rel="noopener noreferrer" className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap border border-slate-500 flex-shrink-0" title="Weet je de ticker niet? Zoek op Google">
+                                        <a href={`https://www.google.com/search?q=${ticker}+stock+ticker`} target="_blank" rel="noopener noreferrer" className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap border border-slate-500 flex-shrink-0">
                                             🔍 Zoek Ticker
                                         </a>
                                     </div>
@@ -287,13 +284,16 @@
                                 <a href={`https://www.google.com/search?q=${ticker}+stock+earnings+date`} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-400 hover:text-blue-300 cursor-pointer flex items-center gap-1">
                                     📅 Check datum cijfers
                                 </a>
+                                <a href={`https://www.google.com/search?q=${ticker}+investor+relations+press+releases`} target="_blank" rel="noopener noreferrer" className="text-[10px] text-green-400 hover:text-green-300 cursor-pointer flex items-center gap-1">
+                                    🏢 Bedrijfswebsite
+                                </a>
                             </div>
 
                             {/* WATCHLIST & NIEUWS RADAR */}
                             {watchlist.length > 0 && (
                                 <div className="mt-4 flex flex-col md:flex-row gap-6">
                                     {/* Linkerkant: De Watchlist Knoppen */}
-                                    <div className="md:w-1/2">
+                                    <div className="md:w-1/3">
                                         <div className="flex justify-between items-end mb-2">
                                             <label className="text-[10px] text-slate-400 uppercase tracking-wide font-bold">Mijn Watchlist</label>
                                         </div>
@@ -307,31 +307,39 @@
                                         </div>
                                     </div>
 
-                                    {/* Rechterkant: Auto-Nieuws Scanner */}
-                                    <div className="md:w-1/2 bg-slate-900/50 p-3 rounded-lg border border-slate-700">
-                                        <div className="flex justify-between items-center mb-2">
+                                    {/* Rechterkant: Officiële Bronnen Scanner */}
+                                    <div className="md:w-2/3 bg-slate-900/50 p-3 rounded-lg border border-slate-700">
+                                        <div className="flex justify-between items-center mb-3 border-b border-slate-700 pb-2">
                                             <label className="text-[10px] text-blue-400 uppercase tracking-wide font-bold flex items-center gap-1">
-                                                <IconNews className="w-3 h-3"/> Dagelijkse Nieuws Radar
+                                                <IconNews className="w-3 h-3"/> Watchlist Nieuws & Bronnen
                                             </label>
-                                            <button onClick={fetchNewsForWatchlist} className="text-[10px] text-slate-400 hover:text-white" title="Check nu opnieuw">
-                                                {isFetchingNews ? "Laden..." : "↻ Scan Nu"}
+                                            <button onClick={fetchNewsForWatchlist} className="text-[10px] text-slate-400 hover:text-white" title="Check financiële pers">
+                                                {isFetchingNews ? "Zoeken..." : "↻ Scan Headlines"}
                                             </button>
                                         </div>
                                         
-                                        <div className="space-y-2 max-h-32 overflow-y-auto pr-2">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-40 overflow-y-auto pr-2">
                                             {watchlist.map((item, idx) => {
                                                 const news = newsData[item.ticker];
                                                 return (
-                                                    <div key={idx} className="text-xs flex flex-col gap-1 pb-2 border-b border-slate-700 last:border-0 last:pb-0">
-                                                        <span className="font-bold text-slate-300">{item.ticker}:</span>
+                                                    <div key={idx} className="text-xs bg-slate-800 p-2 rounded border border-slate-700">
+                                                        <div className="font-bold text-slate-200 mb-1 flex justify-between">
+                                                            {item.ticker}
+                                                            <span className="text-[9px] text-slate-500">{item.market}</span>
+                                                        </div>
+                                                        
+                                                        {/* 1. De Officiële Bedrijfslink (Jouw verzoek) */}
+                                                        <a href={`https://www.google.com/search?q=${item.ticker}+investor+relations+press+releases`} target="_blank" rel="noopener noreferrer" className="text-[10px] bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded border border-slate-600 flex items-center gap-1 mb-2 w-max transition-colors">
+                                                            🏢 Officiële Persberichten (IR)
+                                                        </a>
+
+                                                        {/* 2. De Yahoo Headline Scanner (Ter info) */}
                                                         {news ? (
-                                                            <a href={news.link} target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:text-blue-200 hover:underline leading-tight line-clamp-1">
-                                                                {news.title}
+                                                            <a href={news.link} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white hover:underline leading-tight line-clamp-2 block border-l-2 border-slate-600 pl-2">
+                                                                "{news.title}"
                                                             </a>
                                                         ) : (
-                                                            <a href={`https://news.google.com/search?q=${item.ticker}+stock`} target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-white flex items-center gap-1">
-                                                                Geen recent persbericht gevonden. Zoek in Google News <IconExternal />
-                                                            </a>
+                                                            <span className="text-slate-600 italic text-[10px] block border-l-2 border-slate-700 pl-2">Geen financiële headlines gevonden.</span>
                                                         )}
                                                     </div>
                                                 );
@@ -442,7 +450,7 @@
                             <h2 className="text-xl font-bold text-blue-400 mb-4 flex items-center gap-2">
                                 <IconBook /> Trading Spiekbriefje
                             </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 
                                 <div className="space-y-6">
                                     <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-600">
@@ -469,10 +477,10 @@
                                                 <span>Koop laag, verkoop hoog.</span>
                                             </li>
                                             <li className="bg-green-900/30 p-2 rounded border-l-2 border-green-500">
-                                                <span className="font-bold text-green-400">&lt; 30 (Oversold):</span> Iedereen heeft verkocht. Kans op bounce.
+                                                <span className="font-bold text-green-400">&lt; 30 (Oversold):</span> Iedereen heeft verkocht. Kans op bounce. <span className="font-bold">KOOPZONE</span>.
                                             </li>
                                             <li className="bg-red-900/30 p-2 rounded border-l-2 border-red-500">
-                                                <span className="font-bold text-red-400">&gt; 70 (Overbought):</span> Te hard gestegen. Gevaar.
+                                                <span className="font-bold text-red-400">&gt; 70 (Overbought):</span> Te hard gestegen. Gevaar. <span className="font-bold">VERKOOPZONE</span>.
                                             </li>
                                         </ul>
                                     </div>
@@ -485,6 +493,7 @@
                                             <li className="bg-blue-900/30 p-2 rounded border-l-2 border-blue-500">
                                                 <span className="font-bold text-blue-300">Steun (De Vloer):</span>
                                                 <br/>Lijn onder de punten waar koers stopte met dalen.
+                                                <br/>👉 <span className="italic">Koop zo dicht mogelijk bij de vloer.</span>
                                             </li>
                                             <li className="bg-yellow-900/30 p-2 rounded border-l-2 border-yellow-500">
                                                 <span className="font-bold text-yellow-300">Weerstand (Het Plafond):</span>
@@ -496,12 +505,17 @@
                                     <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-600">
                                         <h3 className="font-bold text-lg mb-2 text-blue-300">4. MACD (Startschot) 🚀</h3>
                                         <ul className="text-sm space-y-2">
-                                            <li className="text-slate-400 mb-1">"Geven we gas of remmen we?"</li>
+                                            <li className="text-slate-400 mb-1">
+                                                "Geven we gas of remmen we?"
+                                            </li>
                                             <li className="bg-green-900/30 p-2 rounded border-l-2 border-green-500">
-                                                <span className="font-bold text-green-400">KOOP (Bullish Cross):</span> Blauwe lijn kruist oranje naar <span className="underline font-bold">BOVEN</span>.
+                                                <span className="font-bold text-green-400">KOOP (Bullish Cross):</span>
+                                                <br/>Blauwe lijn kruist oranje naar <span className="underline font-bold">BOVEN</span>.
+                                                <br/><em>Momentum is gedraaid: Groen licht!</em>
                                             </li>
                                             <li className="bg-red-900/30 p-2 rounded border-l-2 border-red-500">
-                                                <span className="font-bold text-red-400">VERKOOP (Bearish Cross):</span> Blauwe lijn kruist oranje naar <span className="underline font-bold">BENEDEN</span>.
+                                                <span className="font-bold text-red-400">VERKOOP (Bearish Cross):</span>
+                                                <br/>Blauwe lijn kruist oranje naar <span className="underline font-bold">BENEDEN</span>.
                                             </li>
                                         </ul>
                                     </div>
