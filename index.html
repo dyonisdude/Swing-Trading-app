@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SwingTrader Pro - V18</title>
+    <title>SwingTrader Pro - V19</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -38,7 +38,7 @@
         const SwingTraderPro = () => {
             // Basis settings
             const [ticker, setTicker] = useState('BESI');
-            const [market, setMarket] = useState('EU'); // EU, US, UK, SE
+            const [market, setMarket] = useState('EU'); // EU, US, UK, SE, CA
             const [exchange, setExchange] = useState('EURONEXT');
             
             // Watchlist State
@@ -64,6 +64,7 @@
                 if (market === 'US') setExchange('NASDAQ');
                 if (market === 'UK') setExchange('LSE');
                 if (market === 'SE') setExchange('OMXSTO');
+                if (market === 'CA') setExchange('TSX');
             }, [market]);
 
             // Save Watchlist
@@ -84,6 +85,7 @@
                         if (item.market === 'EU') yTicker += '.AS'; 
                         if (item.market === 'UK') yTicker += '.L';  
                         if (item.market === 'SE') yTicker += '.ST'; 
+                        if (item.market === 'CA') yTicker += '.TO'; // TSX beurs voor Yahoo Finance
                         
                         const rssUrl = `https://finance.yahoo.com/rss/headline?s=${yTicker}`;
                         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`;
@@ -228,16 +230,17 @@
                         <div className="bg-slate-800 p-4 rounded-xl shadow-lg border border-slate-700">
                             <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center mb-4 border-b border-slate-700 pb-4">
                                 <h1 className="text-xl font-bold text-blue-400 flex items-center gap-2">
-                                    <IconTrendingUp /> SwingTrader V18
+                                    <IconTrendingUp /> SwingTrader V19
                                 </h1>
                                 
                                 {/* MARKTEN */}
                                 <div className="flex flex-wrap gap-2 w-full md:w-auto items-center">
-                                    <div className="flex bg-slate-900 rounded-lg p-1 border border-slate-600">
+                                    <div className="flex flex-wrap bg-slate-900 rounded-lg p-1 border border-slate-600">
                                         <button onClick={() => setMarket('EU')} className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${market === 'EU' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>🇪🇺 EU</button>
                                         <button onClick={() => setMarket('US')} className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${market === 'US' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>🇺🇸 US</button>
                                         <button onClick={() => setMarket('UK')} className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${market === 'UK' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>🇬🇧 UK</button>
                                         <button onClick={() => setMarket('SE')} className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${market === 'SE' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>🇸🇪 SE</button>
+                                        <button onClick={() => setMarket('CA')} className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${market === 'CA' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>🇨🇦 CA</button>
                                     </div>
 
                                     <select 
@@ -249,6 +252,7 @@
                                         {market === 'US' && <><option value="NASDAQ">NASDAQ</option><option value="NYSE">NYSE</option></>}
                                         {market === 'UK' && <><option value="LSE">Londen (LSE)</option></>}
                                         {market === 'SE' && <><option value="OMXSTO">Stockholm (OMX)</option></>}
+                                        {market === 'CA' && <><option value="TSX">Toronto (TSX)</option><option value="NEO">NEO Exchange</option></>}
                                     </select>
                                 </div>
                             </div>
@@ -328,12 +332,12 @@
                                                             <span className="text-[9px] text-slate-500">{item.market}</span>
                                                         </div>
                                                         
-                                                        {/* 1. De Officiële Bedrijfslink (Jouw verzoek) */}
+                                                        {/* De Officiële Bedrijfslink */}
                                                         <a href={`https://www.google.com/search?q=${item.ticker}+investor+relations+press+releases`} target="_blank" rel="noopener noreferrer" className="text-[10px] bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded border border-slate-600 flex items-center gap-1 mb-2 w-max transition-colors">
                                                             🏢 Officiële Persberichten (IR)
                                                         </a>
 
-                                                        {/* 2. De Yahoo Headline Scanner (Ter info) */}
+                                                        {/* De Yahoo Headline Scanner */}
                                                         {news ? (
                                                             <a href={news.link} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white hover:underline leading-tight line-clamp-2 block border-l-2 border-slate-600 pl-2">
                                                                 "{news.title}"
